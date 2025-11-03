@@ -1,0 +1,29 @@
+/* Kruti Dev 010 के लिए */
+@font-face {
+    font-family: 'KrutiDev010'; /* आप कोई भी नाम दे सकते हैं */
+    src: url('fonts/k010.ttf') format('truetype'); /* फ़ाइल का सही पाथ दें */
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Devlys 010 के लिए */
+@font-face {
+    font-family: 'Devlys010'; /* आप कोई भी नाम दे सकते हैं */
+    src: url('fonts/mfdev010.ttf') format('truetype'); /* फ़ाइल का सही पाथ दें */
+    font-weight: normal;
+    font-style: normal;
+}
+
+.hindi-k010-textbox {
+    /* टेक्स्टबॉक्स पर लागू करने के लिए CSS क्लास */
+    font-family: 'KrutiDev010', sans-serif;
+    /* अन्य स्टाइल */
+    font-size: 16px;
+}
+
+.hindi-dev010-textbox {
+    /* टेक्स्टबॉक्स पर लागू करने के लिए CSS क्लास */
+    font-family: 'Devlys010', sans-serif;
+    /* अन्य स्टाइल */
+    font-size: 16px;
+}
