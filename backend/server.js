@@ -24,31 +24,31 @@ app.post("/api/cases", async (req, res) => {
     }
 
     const sql = `
-  INSERT INTO Cases
-  (SROName,District, Collector, CaseNo, CaseYear, CaseRegistredDate, CaseType, DocumentNumber, DocumentDate, Property, FirstParty, FirstPartyAddress, FirstParty1, FirstParty1Address, SecondParty, SecondPartyAddress, SecondParty1, SecondParty1Address)
-  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-`;
+      INSERT INTO Cases
+      (SROName, District, Collector, CaseNo, CaseYear, CaseRegistredDate, CaseType, DocumentNumber, DocumentDate, Property,
+       FirstParty, FirstPartyAddress, FirstParty1, FirstParty1Address, SecondParty, SecondPartyAddress, SecondParty1, SecondParty1Address)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
-  const values = [
-  data.SROName,
-  data.District,
-  data.Collector,
-  data.CaseNo,
-  data.CaseYear,
-  data.CaseRegistredDate,
-  data.CaseType,
-  data.DocumentNumber,
-  data.DocumentDate,
-  data.Property,
-  data.FirstParty,
-  data.FirstPartyAddress,
-  data.FirstParty1,
-  data.FirstParty1Address,
-  data.SecondParty,
-  data.SecondPartyAddress,
-  data.SecondParty1,
-  data.SecondParty1Address
-  ];
+    const values = [
+      data.SROName,
+      data.District,
+      data.Collector,
+      data.CaseNo,
+      data.CaseYear,
+      data.CaseRegistredDate,
+      data.CaseType,
+      data.DocumentNumber,
+      data.DocumentDate,
+      data.Property,
+      data.FirstParty,
+      data.FirstPartyAddress,
+      data.FirstParty1,
+      data.FirstParty1Address,
+      data.SecondParty,
+      data.SecondPartyAddress,
+      data.SecondParty1,
+      data.SecondParty1Address,
+    ];
 
     const [result] = await db.query(sql, values);
     res.json({ message: "Case created", id: result.insertId });
@@ -95,16 +95,13 @@ app.post("/api/case-details", async (req, res) => {
     // ✅ Update case info
     const updateCaseSql = `
       UPDATE Cases SET
-        SROName = ?, District = ?, Collector = ?,
-        CaseNo = ?, CaseYear = ?, CaseRegistredDate = ?, CaseType = ?, DocumentNumber = ?, DocumentDate = ?, Property = ?,
+        SROName = ?, CaseNo = ?, CaseYear = ?, CaseRegistredDate = ?, CaseType = ?, DocumentNumber = ?, DocumentDate = ?, Property = ?,
         FirstParty = ?, FirstPartyAddress = ?, FirstParty1 = ?, FirstParty1Address = ?,
         SecondParty = ?, SecondPartyAddress = ?, SecondParty1 = ?, SecondParty1Address = ?
       WHERE id = ?
     `;
     const updateCaseValues = [
       caseInfo?.SROName || null,
-      caseInfo?.District || null,
-      caseInfo?.Collector || null,
       caseInfo?.CaseNo || null,
       caseInfo?.CaseYear || null,
       caseInfo?.CaseRegistredDate || null,
@@ -183,48 +180,28 @@ app.post("/api/generate-notice", async (req, res) => {
     const valData = valRows[0] || {};
     if (!caseData) return res.status(404).json({ error: "Case not found" });
 
-    // const data = {
-    //   CaseNo: caseData.CaseNo,
-    //   CaseYear: caseData.CaseYear,
-    //   CaseType: caseData.CaseType || "",
-    //   FirstParty: caseData.FirstParty || "",
-    //   SecondParty: caseData.SecondParty || "",
-    //   CaseRegistredDate: caseData.CaseRegistredDate
-    //     ? new Date(caseData.CaseRegistredDate).toLocaleDateString("en-GB").replace(/\//g, ":")
-    //     : "",
-    //   DocumentNumber: caseData.DocumentNumber,
-    //   DocumentDate: caseData.DocumentDate,
-    //   District: caseData.District || "",
-    //   Collector: caseData.Collector || "",
-    //   PreAmt: valData.PreAmt || 0,
-    //   AfterAmt: valData.AfterAmt || 0,
-    //   PreTotal: valData.PreTotal || 0,
-    //   AfterTotal: valData.AfterTotal || 0,
-    //   BalanceTotal: (valData.AfterTotal || 0) - (valData.PreTotal || 0),
-    //   CurrentDate: new Date().toLocaleDateString("hi-IN"),
-    //   SROName: caseData.SROName,
-    // };
-  const data = {
-  CaseNo: caseData.CaseNo,
-  SROName: caseData.SROName,
-  CaseYear: caseData.CaseYear,
-  CaseType: caseData.CaseType || "",
-  FirstParty: caseData.FirstParty || "",
-  SecondParty: caseData.SecondParty || "",
-  CaseRegistredDate: caseData.CaseRegistredDate? new Date(caseData.CaseRegistredDate).toLocaleDateString("en-GB").replace(/\//g, ":"): "",
-  DocumentNumber: caseData.DocumentNumber,
-  DocumentDate: caseData.DocumentDate,
-  District: caseData.District,
-  Collector: caseData.Collector,
-  PreAmt: valData.PreAmt || 0,
-  AfterAmt: valData.AfterAmt || 0,
-  PreTotal: valData.PreTotal || 0,
-  AfterTotal: valData.AfterTotal || 0,
-  BalanceTotal: (valData.AfterTotal || 0) - (valData.PreTotal || 0),
-  CurrentDate: new Date().toLocaleDateString("hi-IN"),
-  
-};
-  console.log(data.District, data.Collector);
+    const data = {
+      CaseNo: caseData.CaseNo,
+      SROName: caseData.SROName,
+      CaseYear: caseData.CaseYear,
+      CaseType: caseData.CaseType || "",
+      FirstParty: caseData.FirstParty || "",
+      SecondParty: caseData.SecondParty || "",
+      CaseRegistredDate: caseData.CaseRegistredDate
+        ? new Date(caseData.CaseRegistredDate).toLocaleDateString("en-GB").replace(/\//g, ":")
+        : "",
+      DocumentNumber: caseData.DocumentNumber,
+      DocumentDate: caseData.DocumentDate,
+      District: caseData.District,
+      Collector: caseData.Collector,
+      PreAmt: valData.PreAmt || 0,
+      AfterAmt: valData.AfterAmt || 0,
+      PreTotal: valData.PreTotal || 0,
+      AfterTotal: valData.AfterTotal || 0,
+      BalanceTotal: (valData.AfterTotal || 0) - (valData.PreTotal || 0),
+      CurrentDate: new Date().toLocaleDateString("hi-IN"),
+    };
+
     const templatePath = path.join(__dirname, "templates", "Template.docx");
     const content = fs.readFileSync(templatePath, "binary");
 
@@ -246,6 +223,30 @@ app.post("/api/generate-notice", async (req, res) => {
   } catch (err) {
     console.error("Error generating notice:", err);
     res.status(500).json({ error: "Error generating notice" });
+  }
+});
+
+// ------------------ Fetch SRO & District Info ------------------
+
+// ✅ Get all SRO offices (with District info)
+app.get("/api/sros", async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT id, District, SROffice FROM SRO ORDER BY District, SROffice");
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching SRO list:", err);
+    res.status(500).json({ message: "Error fetching SRO list" });
+  }
+});
+
+// ✅ Get all unique districts
+app.get("/api/districts", async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT DISTINCT District FROM SRO ORDER BY District");
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching districts:", err);
+    res.status(500).json({ message: "Error fetching districts" });
   }
 });
 

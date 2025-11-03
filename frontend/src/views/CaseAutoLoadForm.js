@@ -302,7 +302,7 @@ export default function CaseAutoLoadForm() {
                             </div>
                             <div className="col-md-3">
                                 <label className="form-label">Case Registered Date</label>
-                                <input name="CaseRegistredDate" type="date" className="form-control hindi-k010-textbox" value={caseInfo.CaseRegistredDate} onChange={handleCaseInfoChange} readOnly />
+                                <input name="CaseRegistredDate" type="date" className="form-control" value={caseInfo.CaseRegistredDate} onChange={handleCaseInfoChange} readOnly />
                             </div>
 
                             <div className="col-md-3">
@@ -315,7 +315,7 @@ export default function CaseAutoLoadForm() {
                             </div>
                             <div className="col-md-3">
                                 <label className="form-label">Document Date</label>
-                                <input name="DocumentDate" type="date" className="form-control hindi-k010-textbox" value={caseInfo.DocumentDate} onChange={handleCaseInfoChange} readOnly />
+                                <input name="DocumentDate" type="date" className="form-control" value={caseInfo.DocumentDate} onChange={handleCaseInfoChange} readOnly />
                             </div>
                             <div className="col-md-3">
                                 <label className="form-label">Property</label>
@@ -444,7 +444,7 @@ export default function CaseAutoLoadForm() {
 
 
                     </form>
-                    <button className="btn btn-warning mt-3" onClick={() => history.push(`/notice-generator/${selectedCaseId}`)} > Generate Notice Letter  </button>
+                    
                 </div>
             </div>
         </div>
