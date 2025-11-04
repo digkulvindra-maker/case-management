@@ -18,7 +18,8 @@
     "react-router-dom": "^5.3.4",
     "react-scripts": "5.0.1",
     "reactstrap": "8.8.1",
-    "sass": "^1.93.2"
+    "sass": "^1.93.2",
+    "sweetalert2": "^11.26.3"
   },
   "optionalDependencies": {
     "jquery": "3.5.1",

@@ -2,14 +2,13 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const db = require("./db"); // MySQL promise pool connection
+const db = require("./db");
 const fs = require("fs");
 const path = require("path");
 const PizZip = require("pizzip");
 const Docxtemplater = require("docxtemplater");
 
 dotenv.config();
-
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -58,7 +57,7 @@ app.post("/api/cases", async (req, res) => {
   }
 });
 
-// ------------------ List all cases (for dropdown) ------------------
+// ------------------ List all cases ------------------
 app.get("/api/cases", async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -91,6 +90,15 @@ app.post("/api/case-details", async (req, res) => {
   try {
     const { caseId, caseInfo, parties, valuation } = req.body;
     if (!caseId) return res.status(400).json({ message: "Missing caseId" });
+
+    // ✅ Check if locked
+    const [lockedRows] = await db.query(
+      "SELECT Locked FROM case_valuation WHERE CaseId = ?",
+      [caseId]
+    );
+    if (lockedRows.length && lockedRows[0].Locked === 1) {
+      return res.status(403).json({ message: "Data is locked. Editing not allowed." });
+    }
 
     // ✅ Update case info
     const updateCaseSql = `
@@ -141,9 +149,9 @@ app.post("/api/case-details", async (req, res) => {
         CaseId, PreAmt, AfterAmt,
         PreSD, PreSur1, PreSur2, PreSur3, PreRF, PreTotal,
         AfterSD, AfterSur1, AfterSur2, AfterSur3, AfterRF, AfterTotal,
-        BalanceSD, BalanceSur1, BalanceSur2, BalanceSur3, BalanceRF, BalanceTotal
+        BalanceSD, BalanceSur1, BalanceSur2, BalanceSur3, BalanceRF, BalanceTotal, Locked
       )
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)
       ON DUPLICATE KEY UPDATE
         PreSD=VALUES(PreSD), PreSur1=VALUES(PreSur1), PreSur2=VALUES(PreSur2),
         PreSur3=VALUES(PreSur3), PreRF=VALUES(PreRF), PreTotal=VALUES(PreTotal),
@@ -168,6 +176,40 @@ app.post("/api/case-details", async (req, res) => {
   }
 });
 
+// ------------------ Lock case route ------------------
+app.post("/api/lock-case/:id", async (req, res) => {
+  try {
+    const caseId = req.params.id;
+    await db.query("UPDATE case_valuation SET Locked = 1 WHERE CaseId = ?", [caseId]);
+    res.json({ message: "Case data locked successfully." });
+  } catch (err) {
+    console.error("❌ Error locking case:", err);
+    res.status(500).json({ message: "Error locking case" });
+  }
+});
+
+// ------------------ Fetch SRO & District Info ------------------
+app.get("/api/sros", async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT id, District, SROffice FROM SRO ORDER BY id");
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching SRO list:", err);
+    res.status(500).json({ message: "Error fetching SRO list" });
+  }
+});
+
+app.get("/api/districts", async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT DISTINCT District FROM SRO ORDER BY District");
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching districts:", err);
+    res.status(500).json({ message: "Error fetching districts" });
+  }
+});
+
+
 // ------------------ Generate Notice from Template ------------------
 app.post("/api/generate-notice", async (req, res) => {
   const { caseId, format } = req.body;
@@ -188,7 +230,7 @@ app.post("/api/generate-notice", async (req, res) => {
       FirstParty: caseData.FirstParty || "",
       SecondParty: caseData.SecondParty || "",
       CaseRegistredDate: caseData.CaseRegistredDate
-        ? new Date(caseData.CaseRegistredDate).toLocaleDateString("en-GB").replace(/\//g, ":")
+        ? new Date(caseData.CaseRegistredDate).toLocaleDateString("en-GB").replace(/\//g, "/")
         : "",
       DocumentNumber: caseData.DocumentNumber,
       DocumentDate: caseData.DocumentDate,
@@ -225,31 +267,6 @@ app.post("/api/generate-notice", async (req, res) => {
     res.status(500).json({ error: "Error generating notice" });
   }
 });
-
-// ------------------ Fetch SRO & District Info ------------------
-
-// ✅ Get all SRO offices (with District info)
-app.get("/api/sros", async (req, res) => {
-  try {
-    const [rows] = await db.query("SELECT id, District, SROffice FROM SRO ORDER BY District, SROffice");
-    res.json(rows);
-  } catch (err) {
-    console.error("Error fetching SRO list:", err);
-    res.status(500).json({ message: "Error fetching SRO list" });
-  }
-});
-
-// ✅ Get all unique districts
-app.get("/api/districts", async (req, res) => {
-  try {
-    const [rows] = await db.query("SELECT DISTINCT District FROM SRO ORDER BY District");
-    res.json(rows);
-  } catch (err) {
-    console.error("Error fetching districts:", err);
-    res.status(500).json({ message: "Error fetching districts" });
-  }
-});
-
 // ------------------ Start server ------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

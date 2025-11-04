@@ -1,7 +1,7 @@
 // src/views/NoticeLetterGenerator.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "../styles/HindiFont.css";
+
 export default function NoticeLetterGenerator() {
   const [casesList, setCasesList] = useState([]);
   const [selectedCaseId, setSelectedCaseId] = useState("");
@@ -29,7 +29,7 @@ export default function NoticeLetterGenerator() {
       if (!selectedCaseId) return;
       try {
         const res = await axios.get(`http://localhost:5000/api/case/${selectedCaseId}`);
-        setCaseData(res.data.case);
+        setCaseData(res.data);
       } catch (err) {
         console.error("Error loading case data:", err);
       }
@@ -70,14 +70,14 @@ export default function NoticeLetterGenerator() {
       <div className="mb-3">
         <label className="form-label fw-semibold">Select Case:</label>
         <select
-          className="form-select hindi-k010-textbox"
+          className="form-select"
           value={selectedCaseId}
           onChange={(e) => setSelectedCaseId(e.target.value)}
         >
-          <option>-- dsl pqus --</option>
+          <option value="">-- Choose a Case --</option>
           {casesList.map((c) => (
-            <option  key={c.id} value={c.id}>
-              {c.CaseNo}@{c.CaseYear}
+            <option key={c.id} value={c.id}>
+              {c.CaseNo}\{c.CaseYear} — {c.FirstParty} vs {c.SecondParty}
             </option>
           ))}
         </select>
@@ -85,12 +85,12 @@ export default function NoticeLetterGenerator() {
 
       {/* Case Summary */}
       {caseData && (
-        <div className="border p-3 mb-3 rounded bg-light hindi-k010-textbox">
+        <div className="border p-3 mb-3 rounded bg-light">
           <h6>Case Details</h6>
-          <p><strong>Case No:</strong> <span  className="hindi-k010-textbox"> {caseData.CaseNo}@{caseData.CaseYear}</span></p>
-          <p><strong>First Party:</strong> <span className="hindi-k010-textbox"> {caseData.FirstParty}</span></p>
-          <p><strong>Second Party:</strong> <span className="hindi-k010-textbox"> {caseData.SecondParty}</span></p>
-          <p><strong>Type:</strong> <span className="hindi-k010-textbox"> {caseData.CaseType}</span></p>
+          <p><strong>Case No:</strong> {caseData.CaseNo}\{caseData.CaseYear}</p>
+          <p><strong>First Party:</strong> {caseData.FirstParty}</p>
+          <p><strong>Second Party:</strong> {caseData.SecondParty}</p>
+          <p><strong>Type:</strong> {caseData.CaseType}</p>
         </div>
       )}
 
