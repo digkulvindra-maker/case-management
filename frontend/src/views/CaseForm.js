@@ -43,8 +43,8 @@ export default function CaseForm() {
     const fetchSROsAndDistricts = async () => {
       try {
         const [sroRes, distRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/sros"),
-          axios.get("http://localhost:5000/api/districts"),
+          axios.get("http://192.168.1.102:5000/api/sros"),
+          axios.get("http://192.168.1.102:5000/api/districts"),
         ]);
         setSroList(sroRes.data || []);
         setDistricts(distRes.data?.map(d => d.District) || []);
@@ -75,7 +75,7 @@ export default function CaseForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/cases", formData);
+      const res = await axios.post("http://192.168.1.102:5000/api/cases", formData);
       await Swal.fire({
         icon: "success",
         title: "Case Saved",

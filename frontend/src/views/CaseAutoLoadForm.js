@@ -43,7 +43,7 @@ export default function CaseAutoLoadForm() {
   });
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/cases")
+    axios.get("http://192.168.1.102:5000/api/cases")
       .then(res => setCasesList(res.data || []))
       .catch(err => {
         console.error("Error loading cases list:", err);
@@ -60,7 +60,7 @@ export default function CaseAutoLoadForm() {
       return;
     }
 
-    axios.get(`http://localhost:5000/api/case/${caseId}`)
+    axios.get(`http://192.168.1.102:5000/api/case/${caseId}`)
       .then(res => {
         const data = res.data || {};
         const c = data.case || {};
@@ -164,7 +164,7 @@ export default function CaseAutoLoadForm() {
 
     try {
       const payload = { caseId: selectedCaseId, caseInfo, parties, valuation };
-      const res = await axios.post("http://localhost:5000/api/case-details", payload);
+      const res = await axios.post("http://192.168.1.102:5000/api/case-details", payload);
       Swal.fire({ icon: "success", title: "Saved", text: res?.data?.message || "Case details saved successfully!" });
     } catch (err) {
       console.error("Error saving details:", err);
@@ -190,7 +190,7 @@ export default function CaseAutoLoadForm() {
     if (!confirm.isConfirmed) return;
 
     try {
-      await axios.post(`http://localhost:5000/api/lock-case/${selectedCaseId}`);
+      await axios.post(`http://192.168.1.102:5000/api/lock-case/${selectedCaseId}`);
       setLocked(true);
       Swal.fire("Locked!", "This case is now locked and cannot be edited.", "success");
     } catch (err) {

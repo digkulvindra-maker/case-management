@@ -12,7 +12,9 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/generated_ordersheet", express.static(path.join(__dirname, "generated_ordersheet")));
 app.use("/generated_notices", express.static(path.join(__dirname, "generated_notices")));
+
 
 // ------------------ Create new case ------------------
 app.post("/api/cases", async (req, res) => {
@@ -210,7 +212,7 @@ app.get("/api/districts", async (req, res) => {
 });
 
 
-// ------------------ Generate Notice from Template ------------------
+// ------------------ Generate Order Sheet from Template ------------------
 app.post("/api/generate-notice", async (req, res) => {
   const { caseId, format } = req.body;
   if (!caseId) return res.status(400).json({ error: "Missing caseId" });
@@ -233,7 +235,9 @@ app.post("/api/generate-notice", async (req, res) => {
         ? new Date(caseData.CaseRegistredDate).toLocaleDateString("en-GB").replace(/\//g, "/")
         : "",
       DocumentNumber: caseData.DocumentNumber,
-      DocumentDate: caseData.DocumentDate,
+      DocumentDate: caseData.DocumentDate
+        ? new Date(caseData.DocumentDate).toLocaleDateString("en-GB").replace(/\//g, "/")
+        : "",
       District: caseData.District,
       Collector: caseData.Collector,
       PreAmt: valData.PreAmt || 0,
@@ -244,11 +248,96 @@ app.post("/api/generate-notice", async (req, res) => {
       CurrentDate: new Date().toLocaleDateString("hi-IN"),
     };
 
-    const templatePath = path.join(__dirname, "templates", "Template.docx");
+    const templatePath = path.join(__dirname, "templates", "OrderSheet.docx");
     const content = fs.readFileSync(templatePath, "binary");
 
     const zip = new PizZip(content);
-    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true,delimiters: { start: '^^', end: '^^' }}); // safer custom delimiters});
+   
+    doc.setData(data);
+    doc.render();
+
+    
+
+    const buffer = doc.getZip().generate({ type: "nodebuffer" });
+    const outputDir = path.join(__dirname, "generated_ordersheet");
+    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
+
+    const fileName = `OrderSheet_${data.CaseNo}_${data.CaseYear}.${format === "pdf" ? "pdf" : "docx"}`;
+    const outputFilePath = path.join(outputDir, fileName);
+
+    fs.writeFileSync(outputFilePath, buffer);
+    const publicPath = `generated_ordersheet/${fileName}`;
+    res.json({ success: true, filePath: publicPath });
+  } catch (err) {
+    console.error("Error generating notice:", err);
+    res.status(500).json({ error: "Error generating notice" });
+  }
+});
+
+// ------------------ Generate Notice (with Notice/Hiring Dates) ------------------
+app.post("/api/generate-notice-with-dates", async (req, res) => {
+  const { caseId, format, noticeDate, hiringDate } = req.body;
+  if (!caseId) return res.status(400).json({ error: "Missing caseId" });
+
+  try {
+    // Get case + valuation details
+    const [caseRows] = await db.query("SELECT * FROM Cases WHERE id = ?", [caseId]);
+    const [valRows] = await db.query("SELECT * FROM case_valuation WHERE CaseId = ?", [caseId]);
+    const caseData = caseRows[0];
+    const valData = valRows[0] || {};
+    if (!caseData) return res.status(404).json({ error: "Case not found" });
+
+    // Prepare template data
+    const data = {
+      CaseNo: caseData.CaseNo,
+      CaseYear: caseData.CaseYear,
+      CaseType: caseData.CaseType || "",
+      DocumentDate: caseData.DocumentDate ? new Date(caseData.DocumentDate).toLocaleDateString("en-GB").replace(/\//g, "/")
+        : "",
+      DocumentNumber: caseData.DocumentNumber || "",
+      SROName: caseData.SROName,
+      District: caseData.District,
+      Collector: caseData.Collector,
+      FirstParty: caseData.FirstParty || "",
+      SecondParty: caseData.SecondParty || "",
+      SecondParty1: caseData.SecondParty1 || "",
+      SecondPartyAddress: caseData.SecondPartyAddress,
+      NoticeDate: noticeDate
+        ? new Date(noticeDate).toLocaleDateString("en-GB").replace(/\//g, "/")
+        : new Date().toLocaleDateString("en-GB").replace(/\//g, "/"),
+      HiringDate: hiringDate
+        ? new Date(hiringDate).toLocaleDateString("en-GB").replace(/\//g, "/")
+        : "",
+      PreAmt: valData.PreAmt || 0,
+      PreSD: valData.PreSD || 0,
+      AfterSD: valData.AfterSD || 0,
+      PreRF: valData.PreRF || 0,
+      AfterRF: valData.AfterRF || 0,
+      PreSur1: valData.PreSur1 || 0,
+      PreSur2: valData.PreSur2 || 0,
+      PreSur3: valData.PreSur3 || 0,
+      AfterSur1: valData.AfterSur1 || 0,
+      AfterSur2: valData.AfterSur2 || 0,
+      AfterSur3: valData.AfterSur3 || 0,
+      AfterAmt: valData.AfterAmt || 0,
+      PreTotal: valData.PreTotal || 0,
+      AfterTotal: valData.AfterTotal || 0,
+      BalanceTotal: (valData.AfterTotal || 0) - (valData.PreTotal || 0),
+      GeneratedAt: new Date().toLocaleDateString("hi-IN"),
+    };
+
+    // Template path (use a new Notice.docx)
+    const templatePath = path.join(__dirname, "templates", "Notice.docx");
+    const content = fs.readFileSync(templatePath, "binary");
+    const zip = new PizZip(content);
+    // const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      delimiters: { start: '^^', end: '^^' }, // safer custom delimiters
+    });
+
     doc.setData(data);
     doc.render();
 
@@ -256,17 +345,55 @@ app.post("/api/generate-notice", async (req, res) => {
     const outputDir = path.join(__dirname, "generated_notices");
     if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
 
-    const fileName = `Notice_${data.CaseNo}_${data.CaseYear}.${format === "pdf" ? "pdf" : "docx"}`;
+    const fileName = `Notice_${caseData.CaseNo}_${caseData.CaseYear}_${Date.now()}.${format === "pdf" ? "pdf" : "docx"}`;
     const outputFilePath = path.join(outputDir, fileName);
-
     fs.writeFileSync(outputFilePath, buffer);
+
     const publicPath = `generated_notices/${fileName}`;
+
+    // 💾 Save metadata to DB
+    await db.query(
+      `INSERT INTO generated_notices (CaseId, NoticeDate, HiringDate, Format, FilePath)
+       VALUES (?, ?, ?, ?, ?)`,
+      [caseId, noticeDate, hiringDate, format, publicPath]
+    );
+
     res.json({ success: true, filePath: publicPath });
   } catch (err) {
-    console.error("Error generating notice:", err);
-    res.status(500).json({ error: "Error generating notice" });
+    console.error("❌ Error generating notice-with-dates:", err);
+    res.status(500).json({ error: "Error generating notice-with-dates" });
   }
 });
+
+
+app.get("/api/generated-notices/:caseId", async (req, res) => {
+  const { caseId } = req.params;
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM generated_notices WHERE CaseId = ? ORDER BY id DESC",
+      [caseId]
+    );
+
+    // 🧹 Clean up date formats (remove time)
+    const formatted = rows.map(row => ({
+      ...row,
+      NoticeDate: row.NoticeDate
+        ? new Date(row.NoticeDate).toLocaleDateString("en-GB").replace(/\//g, "/")
+        : "",
+      HiringDate: row.HiringDate
+        ? new Date(row.HiringDate).toLocaleDateString("en-GB").replace(/\//g, "/")
+        : "",
+
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error("Error fetching generated notices:", err);
+    res.status(500).json({ message: "DB error fetching generated notices" });
+  }
+});
+
+
 // ------------------ Start server ------------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT}`));

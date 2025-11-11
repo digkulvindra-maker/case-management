@@ -14,7 +14,7 @@ export default function NoticeLetterGenerator() {
   useEffect(() => {
     async function fetchCases() {
       try {
-        const res = await axios.get("http://localhost:5000/api/cases");
+        const res = await axios.get("http://192.168.1.102:5000/api/cases");
         setCasesList(res.data);
       } catch (err) {
         console.error("Error fetching cases:", err);
@@ -28,7 +28,7 @@ export default function NoticeLetterGenerator() {
     async function fetchCaseDetails() {
       if (!selectedCaseId) return;
       try {
-        const res = await axios.get(`http://localhost:5000/api/case/${selectedCaseId}`);
+        const res = await axios.get(`http://192.168.1.102:5000/api/case/${selectedCaseId}`);
         setCaseData(res.data.case);
       } catch (err) {
         console.error("Error loading case data:", err);
@@ -47,12 +47,12 @@ export default function NoticeLetterGenerator() {
     setLoading(true);
     setDownloadLink("");
     try {
-      const res = await axios.post("http://localhost:5000/api/generate-notice", {
+      const res = await axios.post("http://192.168.1.102:5000/api/generate-notice", {
         caseId: selectedCaseId,
         format,
       });
       if (res.data?.filePath) {
-        setDownloadLink(`http://localhost:5000/${res.data.filePath}`);
+        setDownloadLink(`http://192.168.1.102:5000/${res.data.filePath}`);
       }
     } catch (err) {
       console.error("Error generating notice:", err);
@@ -64,7 +64,7 @@ export default function NoticeLetterGenerator() {
 
   return (
     <div className="container mt-4 p-4 shadow bg-white rounded">
-      <h4 className="mb-3 text-primary fw-bold">📄 Notice Letter Generator</h4>
+      <h4 className="mb-3 text-primary fw-bold">📄 Order Sheet</h4>
 
       {/* Select Case */}
       <div className="mb-3">
@@ -137,7 +137,7 @@ export default function NoticeLetterGenerator() {
             rel="noopener noreferrer"
             className="btn btn-success"
           >
-            ⬇️ Download Notice ({format.toUpperCase()})
+            ⬇️ Download Order-Sheet ({format.toUpperCase()})
           </a>
         </div>
       )}
