@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "../styles/HindiFont.css";
+
 export default function NoticeLetterGenerator() {
   const [casesList, setCasesList] = useState([]);
   const [selectedCaseId, setSelectedCaseId] = useState("");
@@ -63,84 +64,95 @@ export default function NoticeLetterGenerator() {
   };
 
   return (
-    <div className="container mt-4 p-4 shadow bg-white rounded">
-      <h4 className="mb-3 text-primary fw-bold">📄 Order Sheet</h4>
+    <div className="container p-3 bg-light rounded">
+      <div className="card shadow-lg border-0">
+        {/* 🟨 Card Header */}
+        <div className="card-header bg-warning text-dark fw-bold">
+          📄 Order Sheet
+        </div>
 
-      {/* Select Case */}
-      <div className="mb-3">
-        <label className="form-label fw-semibold">Select Case:</label>
-        <select
-          className="form-select hindi-k010-textbox"
-          value={selectedCaseId}
-          onChange={(e) => setSelectedCaseId(e.target.value)}
-        >
-          <option>-- dsl pqus --</option>
-          {casesList.map((c) => (
-            <option  key={c.id} value={c.id}>
-              {c.CaseNo}@{c.CaseYear}
-            </option>
-          ))}
-        </select>
+        {/* 🧾 Card Body */}
+        <div className="card-body">
+
+          {/* 🔹 Section 1: Select Case */}
+          <div className="mb-4">
+            <h6 className="text-dark fw-bold border-bottom pb-1">Select Case</h6>
+            <select
+              className="form-select w-50 hindi-k010-textbox"
+              value={selectedCaseId}
+              onChange={(e) => setSelectedCaseId(e.target.value)}
+            >
+              <option value="">-- dsl pqus --</option>
+              {casesList.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.CaseNo}@{c.CaseYear}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 🔹 Section 2: Case Details */}
+          {caseData && (
+            <div className="mb-4">
+              <h6 className="text-dark fw-bold border-bottom pb-1">Case Details</h6>
+              <div className="p-3 bg-light border rounded hindi-k010-textbox">
+                <p><strong>Case No:</strong> <span className="hindi-k010-textbox">{caseData.CaseNo}@{caseData.CaseYear}</span></p>
+                <p><strong>First Party:</strong> <span className="hindi-k010-textbox">{caseData.FirstParty}</span></p>
+                <p><strong>Second Party:</strong> <span className="hindi-k010-textbox">{caseData.SecondParty}</span></p>
+                <p><strong>Type:</strong> <span className="hindi-k010-textbox">{caseData.CaseType}</span></p>
+              </div>
+            </div>
+          )}
+
+          {/* 🔹 Section 3: Select File Format */}
+          <div className="mb-4">
+            <h6 className="text-dark fw-bold border-bottom pb-1">Select File Format</h6>
+            <div className="ms-1">
+              <label className="me-3">
+                <input
+                  type="radio"
+                  value="docx"
+                  checked={format === "docx"}
+                  onChange={(e) => setFormat(e.target.value)}
+                />{" "}
+                Word (DOCX)
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  value="pdf"
+                  checked={format === "pdf"}
+                  onChange={(e) => setFormat(e.target.value)}
+                />{" "}
+                PDF
+              </label>
+            </div>
+          </div>
+
+          {/* 🔹 Section 4: Generate Button & Download Link */}
+          <div className="d-flex align-items-center gap-3 mt-3">
+            <button
+              className="btn btn-primary"
+              onClick={handleGenerate}
+              disabled={loading}
+            >
+              {loading ? "Generating..." : "Generate Notice Letter"}
+            </button>
+
+            {downloadLink && (
+              <a
+                href={downloadLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-success"
+              >
+                ⬇️ Download Order Sheet ({format.toUpperCase()})
+              </a>
+            )}
+          </div>
+
+        </div>
       </div>
-
-      {/* Case Summary */}
-      {caseData && (
-        <div className="border p-3 mb-3 rounded bg-light hindi-k010-textbox">
-          <h6>Case Details</h6>
-          <p><strong>Case No:</strong> <span  className="hindi-k010-textbox"> {caseData.CaseNo}@{caseData.CaseYear}</span></p>
-          <p><strong>First Party:</strong> <span className="hindi-k010-textbox"> {caseData.FirstParty}</span></p>
-          <p><strong>Second Party:</strong> <span className="hindi-k010-textbox"> {caseData.SecondParty}</span></p>
-          <p><strong>Type:</strong> <span className="hindi-k010-textbox"> {caseData.CaseType}</span></p>
-        </div>
-      )}
-
-      {/* Select Format */}
-      <div className="mb-3">
-        <label className="form-label fw-semibold">Select File Format:</label>
-        <div>
-          <label className="me-3">
-            <input
-              type="radio"
-              value="docx"
-              checked={format === "docx"}
-              onChange={(e) => setFormat(e.target.value)}
-            />{" "}
-            Word (DOCX)
-          </label>
-          <label>
-            <input
-              type="radio"
-              value="pdf"
-              checked={format === "pdf"}
-              onChange={(e) => setFormat(e.target.value)}
-            />{" "}
-            PDF
-          </label>
-        </div>
-      </div>
-
-      {/* Generate Button */}
-      <button
-        className="btn btn-primary"
-        onClick={handleGenerate}
-        disabled={loading}
-      >
-        {loading ? "Generating..." : "Generate Notice Letter"}
-      </button>
-
-      {/* Download Link */}
-      {downloadLink && (
-        <div className="mt-4">
-          <a
-            href={downloadLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-success"
-          >
-            ⬇️ Download Order-Sheet ({format.toUpperCase()})
-          </a>
-        </div>
-      )}
     </div>
   );
 }

@@ -39,6 +39,7 @@ export default function CaseForm() {
   ];
   const collectorOptions = ["guqekux<+"];
 
+
   useEffect(() => {
     const fetchSROsAndDistricts = async () => {
       try {
@@ -49,18 +50,17 @@ export default function CaseForm() {
         setSroList(sroRes.data || []);
         setDistricts(distRes.data?.map(d => d.District) || []);
       } catch (err) {
-        console.error("Error loading SRO/Districts:", err);
         setMsg("Error loading SROs or Districts");
       }
     };
     fetchSROsAndDistricts();
   }, []);
 
-  // Auto-set District when SRO selected
+
   const handleSROChange = (e) => {
     const selectedSRO = e.target.value;
     const found = sroList.find((s) => s.SROffice === selectedSRO);
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       SROName: selectedSRO,
       District: found ? found.District : prev.District,
@@ -72,6 +72,7 @@ export default function CaseForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -80,10 +81,8 @@ export default function CaseForm() {
         icon: "success",
         title: "Case Saved",
         text: res.data?.message || "Case saved successfully!",
-        confirmButtonColor: "#3085d6",
       });
 
-      // Reset form after success
       setFormData({
         SROName: "",
         District: "",
@@ -104,32 +103,39 @@ export default function CaseForm() {
         SecondParty1: "",
         SecondParty1Address: ""
       });
-    } catch (err) {
-      console.error("Error saving case:", err);
-      await Swal.fire({
+
+    } catch {
+      Swal.fire({
         icon: "error",
         title: "Save Failed",
-        text: err?.response?.data?.message || "Error saving data",
-        confirmButtonColor: "#d33",
+        text: "Error saving data",
       });
     }
   };
 
+
   return (
-    <div className="container my-4">
-      <div className="card shadow-sm">
-        <div className="card-header bg-primary text-white">
-          <h4 className="card-title mb-0">Case Entry</h4>
+    <div className="container p-2">
+      <div className="card shadow-lg border-0">
+
+        {/* -------------------- HEADER -------------------- */}
+        <div className="card-header bg-warning">
+          <h4 className="card-title fw-bold text-dark">📁 Case Entry</h4>
         </div>
 
         <div className="card-body">
+
           {msg && <div className="alert alert-warning">{msg}</div>}
+
           <form onSubmit={handleSubmit}>
-            <div className="row g-3">
+
+            {/* -------------------- SECTION 1 -------------------- */}
+            <h6 className="mt-2 text-dark fw-bold bg-light p-2">Court / SRO Details</h6>
+            <div className="row g-3 mt-1">
+              
               <div className="col-md-4">
-                <label htmlFor="Collector" className="form-label">Court Collector(Stamps)</label>
+                <label className="form-label">Court Collector (Stamps)</label>
                 <select
-                  id="Collector"
                   name="Collector"
                   className="form-select hindi-k010-textbox"
                   value={formData.Collector}
@@ -137,30 +143,27 @@ export default function CaseForm() {
                   required
                 >
                   <option value="">dyDVj pqus</option>
-                  {collectorOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                  {collectorOptions.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
               <div className="col-md-4">
-                <label htmlFor="District" className="form-label">District</label>
+                <label className="form-label">District</label>
                 <select
-                  id="District"
                   name="District"
                   className="form-select hindi-k010-textbox"
                   value={formData.District}
                   onChange={handleChange}
-                  required
                   disabled
                 >
-                  <option value="">ftyk pqus</option>
-                  {districts.map((d) => <option key={d} value={d}>{d}</option>)}
+                  <option>ftyk pqus</option>
+                  {districts.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
 
               <div className="col-md-4">
-                <label htmlFor="SROName" className="form-label">SRO Name</label>
+                <label className="form-label">SRO Name</label>
                 <select
-                  id="SROName"
                   name="SROName"
                   className="form-select hindi-k010-textbox"
                   value={formData.SROName}
@@ -168,95 +171,93 @@ export default function CaseForm() {
                   required
                 >
                   <option value="">,l vkj vks pqus</option>
-                  {sroList.map((s) => (
+                  {sroList.map(s => (
                     <option key={s.id} value={s.SROffice}>{s.SROffice}</option>
                   ))}
                 </select>
               </div>
 
-              <div className="col-md-4">
-                <label htmlFor="CaseNo" className="form-label">Case No</label>
-                <input id="CaseNo" name="CaseNo" type="text" className="form-control hindi-k010-textbox" value={formData.CaseNo} onChange={handleChange} required />
-              </div>
-
-              <div className="col-md-4">
-                <label htmlFor="CaseYear" className="form-label">Case Year</label>
-                <input id="CaseYear" name="CaseYear" type="number" className="form-control hindi-k010-textbox" value={formData.CaseYear} onChange={handleChange} required />
-              </div>
-
-              <div className="col-md-4">
-                <label htmlFor="CaseRegistredDate" className="form-label">Case Registered Date</label>
-                <input id="CaseRegistredDate" name="CaseRegistredDate" type="date" className="form-control" value={formData.CaseRegistredDate} onChange={handleChange} />
-              </div>
             </div>
 
-            <div className="row g-3 mt-2">
+
+            {/* -------------------- SECTION 2 -------------------- */}
+            <h6 className="mt-4 text-dark fw-bold bg-light p-2">Case Details</h6>
+            <div className="row g-3 mt-1">
+
               <div className="col-md-4">
-                <label htmlFor="CaseType" className="form-label">Case Type</label>
-                <select id="CaseType" name="CaseType" className="form-select hindi-k010-textbox" value={formData.CaseType} onChange={handleChange} required>
+                <label className="form-label">Case No</label>
+                <input type="text" name="CaseNo" className="form-control hindi-k010-textbox"
+                  value={formData.CaseNo} onChange={handleChange} required />
+              </div>
+
+              <div className="col-md-4">
+                <label className="form-label">Case Year</label>
+                <input type="number" name="CaseYear" className="form-control hindi-k010-textbox"
+                  value={formData.CaseYear} onChange={handleChange} required />
+              </div>
+
+              <div className="col-md-4">
+                <label className="form-label">Case Registered Date</label>
+                <input type="date" name="CaseRegistredDate" className="form-control"
+                  value={formData.CaseRegistredDate} onChange={handleChange} />
+              </div>
+
+              <div className="col-md-4">
+                <label className="form-label">Case Type</label>
+                <select name="CaseType" className="form-select hindi-k010-textbox"
+                  value={formData.CaseType} onChange={handleChange} required>
                   <option value="">dsl izdkj pqus</option>
-                  {caseTypes.map((c) => <option key={c} value={c}>{c}</option>)}
+                  {caseTypes.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
-              <div className="col-md-4">
-                <label htmlFor="DocumentNumber" className="form-label">Document Number</label>
-                <input id="DocumentNumber" name="DocumentNumber" type="text" className="form-control hindi-k010-textbox" value={formData.DocumentNumber} onChange={handleChange} />
-              </div>
+            </div>
+
+
+            {/* -------------------- SECTION 3 -------------------- */}
+            <h6 className="mt-4 text-dark fw-bold bg-light p-2">Document Details</h6>
+            <div className="row g-3 mt-1">
 
               <div className="col-md-4">
-                <label htmlFor="DocumentDate" className="form-label">Document Date</label>
-                <input id="DocumentDate" name="DocumentDate" type="date" className="form-control" value={formData.DocumentDate} onChange={handleChange} />
+                <label className="form-label">Document Number</label>
+                <input type="text" name="DocumentNumber" className="form-control hindi-k010-textbox"
+                  value={formData.DocumentNumber} onChange={handleChange} />
+              </div>
+
+              <div className="col-md-4">
+                <label className="form-label">Document Date</label>
+                <input type="date" name="DocumentDate" className="form-control"
+                  value={formData.DocumentDate} onChange={handleChange} />
+              </div>
+
+            </div>
+
+
+            {/* -------------------- SECTION 4 -------------------- */}
+            <h6 className="mt-4 text-dark fw-bold bg-light p-2">Party Details</h6>
+            <div className="row g-3 mt-1">
+
+              <div className="col-md-6">
+                <label className="form-label">First Party</label>
+                <input type="text" name="FirstParty"
+                  className="form-control hindi-k010-textbox"
+                  value={formData.FirstParty} onChange={handleChange} />
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label">Second Party</label>
+                <input type="text" name="SecondParty"
+                  className="form-control hindi-k010-textbox"
+                  value={formData.SecondParty} onChange={handleChange} />
               </div>
             </div>
 
-            <div className="row g-3 mt-2">
-              <div className="col-md-6">
-                <label htmlFor="FirstParty" className="form-label">First Party</label>
-                <input id="FirstParty" name="FirstParty" type="text" className="form-control hindi-k010-textbox" value={formData.FirstParty} onChange={handleChange} />
-              </div>
-              <div className="col-md-6">
-                <label htmlFor="SecondParty" className="form-label">Second Party</label>
-                <input id="SecondParty" name="SecondParty" type="text" className="form-control hindi-k010-textbox" value={formData.SecondParty} onChange={handleChange} />
-              </div>
+
+            {/* -------------------- SUBMIT BUTTON -------------------- */}
+            <div className="mt-4 d-flex justify-content-end">
+              <button type="submit" className="btn btn-primary px-4">Save Case</button>
             </div>
 
-            {/* <div className="row g-3 mt-2">
-              <div className="col-md-6">
-                <label htmlFor="FirstPartyAddress" className="form-label">First Party Address</label>
-                <input id="FirstPartyAddress" name="FirstPartyAddress" type="text" className="form-control hindi-k010-textbox" value={formData.FirstPartyAddress} onChange={handleChange} />
-              </div>
-              <div className="col-md-6">
-                <label htmlFor="SecondPartyAddress" className="form-label">Second Party Address</label>
-                <input id="SecondPartyAddress" name="SecondPartyAddress" type="text" className="form-control hindi-k010-textbox" value={formData.SecondPartyAddress} onChange={handleChange} />
-              </div>
-            </div>
-
-            <div className="row g-3 mt-2">
-              <div className="col-md-6">
-                <label htmlFor="FirstParty1" className="form-label">First Party1</label>
-                <input id="FirstParty1" name="FirstParty1" type="text" className="form-control hindi-k010-textbox" value={formData.FirstParty1} onChange={handleChange} />
-              </div>
-              <div className="col-md-6">
-                <label htmlFor="SecondParty1" className="form-label">Second Party1</label>
-                <input id="SecondParty1" name="SecondParty1" type="text" className="form-control hindi-k010-textbox" value={formData.SecondParty1} onChange={handleChange} />
-              </div>
-            </div>
-
-            <div className="row g-3 mt-2">
-              <div className="col-md-6">
-                <label htmlFor="FirstParty1Address" className="form-label">First Party1 Address</label>
-                <input id="FirstParty1Address" name="FirstParty1Address" type="text" className="form-control hindi-k010-textbox" value={formData.FirstParty1Address} onChange={handleChange} />
-              </div>
-              <div className="col-md-6">
-                <label htmlFor="SecondParty1Address" className="form-label">Second Party1 Address</label>
-                <input id="SecondParty1Address" name="SecondParty1Address" type="text" className="form-control hindi-k010-textbox" value={formData.SecondParty1Address} onChange={handleChange} />
-              </div>
-            </div>
-*/}
-            <div className="mt-4 d-flex justify-content-end gap-2">
-              <button type="submit" className="btn btn-primary">Save Case</button>
-            </div> 
           </form>
         </div>
       </div>
