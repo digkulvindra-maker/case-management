@@ -68,7 +68,7 @@ function Header() {
           <span className="navbar-toggler-bar burger-lines"></span>
         </Navbar.Toggle>
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="nav mr-auto" navbar>
+          {/* <Nav className="nav mr-auto" navbar>
             <Nav.Item>
               <Nav.Link
                 data-toggle="dropdown"
@@ -201,7 +201,7 @@ function Header() {
                 <span className="no-icon">Log out</span>
               </Nav.Link>
             </Nav.Item>
-          </Nav>
+          </Nav> */}
         </Navbar.Collapse>
       </Container>
     </Navbar>

@@ -67,8 +67,8 @@ export default function NoticeLetterGenerator() {
     <div className="container p-3 bg-light rounded">
       <div className="card shadow-lg border-0">
         {/* 🟨 Card Header */}
-        <div className="card-header bg-warning text-dark fw-bold">
-          📄 Order Sheet
+        <div className="card-header bg-info text-dark fw-bold">
+           Order Sheet
         </div>
 
         {/* 🧾 Card Body */}
@@ -136,7 +136,7 @@ export default function NoticeLetterGenerator() {
               onClick={handleGenerate}
               disabled={loading}
             >
-              {loading ? "Generating..." : "Generate Notice Letter"}
+              {loading ? "Generating..." : "Generate Order Sheet"}
             </button>
 
             {downloadLink && (

@@ -118,8 +118,8 @@ export default function GenerateNoticeWithDates() {
     <div className="container mt-4">
       <div className="card shadow-lg border-0">
         {/* 🟨 Header */}
-        <div className="card-header bg-warning text-dark fw-bold">
-          📄 Generate Notice
+        <div className="card-header bg-info text-dark fw-bold">
+           Generate Notice
         </div>
 
         {/* 🧾 Body */}

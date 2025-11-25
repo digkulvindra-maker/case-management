@@ -1,20 +1,15 @@
 /*!
-
 =========================================================
 * Light Bootstrap Dashboard React - v2.0.1
 =========================================================
 
 * Product Page: https://www.creative-tim.com/product/light-bootstrap-dashboard-react
-* Copyright 2022 Creative Tim (https://www.creative-tim.com)
-* Licensed under MIT (https://github.com/creativetimofficial/light-bootstrap-dashboard-react/blob/master/LICENSE.md)
-
-* Coded by Creative Tim
+* Copyright 2022 Creative Tim
+* Licensed under MIT
 
 =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
 */
+
 import Dashboard from "views/Dashboard.js";
 import UserProfile from "views/UserProfile.js";
 import TableList from "views/TableList.js";
@@ -24,48 +19,16 @@ import Icons from "views/Icons.js";
 import Maps from "views/Maps.js";
 import Notifications from "views/Notifications.js";
 import Upgrade from "views/Upgrade.js";
+
 import CaseForm from "./views/CaseForm.js";
 import CaseAutoLoadForm from "./views/CaseAutoLoadForm.js";
 import NoticeLetterGenerator from "./views/NoticeLetterGenerator";
 import GenerateNoticeWithDates from "views/GenerateNoticeWithDates.js";
+import ValuationReport from "./views/ValuationReport.js";
+import OtherCase from "./views/OtherCase.js";   // ✅ NEW COMPONENT IMPORT
+
 
 const dashboardRoutes = [
-  // {
-  //   upgrade: true,
-  //   path: "/upgrade",
-  //   name: "Upgrade to PRO",
-  //   icon: "nc-icon nc-alien-33",
-  //   component: Upgrade,
-  //   layout: "/admin"
-  // },
-  // {
-  //   path: "/dashboard",
-  //   name: "Dashboard",
-  //   icon: "nc-icon nc-chart-pie-35",
-  //   component: Dashboard,
-  //   layout: "/admin"
-  // },
-  // {
-  //   path: "/user",
-  //   name: "User Profile",
-  //   icon: "nc-icon nc-circle-09",
-  //   component: UserProfile,
-  //   layout: "/admin"
-  // },
-  // {
-  //   path: "/table",
-  //   name: "Table List",
-  //   icon: "nc-icon nc-notes",
-  //   component: TableList,
-  //   layout: "/admin"
-  // },
-  // {
-  //   path: "/typography",
-  //   name: "Typography",
-  //   icon: "nc-icon nc-paper-2",
-  //   component: Typography,
-  //   layout: "/admin"
-  // },
   {
     path: "/icons",
     name: "Icons",
@@ -73,20 +36,7 @@ const dashboardRoutes = [
     component: Icons,
     layout: "/admin"
   },
-  // {
-  //   path: "/maps",
-  //   name: "Maps",
-  //   icon: "nc-icon nc-pin-3",
-  //   component: Maps,
-  //   layout: "/admin"
-  // },
-  // {
-  //   path: "/notifications",
-  //   name: "Notifications",
-  //   icon: "nc-icon nc-bell-55",
-  //   component: Notifications,
-  //   layout: "/admin"
-  // },
+
   {
     path: "/case-entry",
     name: "Case Entry",
@@ -97,27 +47,45 @@ const dashboardRoutes = [
   {
     path: "/case-auto-load",
     name: "Case Valuation",
-    icon: "nc-icon nc-notes", // you can choose any icon you like
+    icon: "nc-icon nc-notes",
     component: CaseAutoLoadForm,
     layout: "/admin"
   },
 
   {
-    path: "/notice-generator/:caseId",
-    name: "Order-Sheet",
-    icon: "nc-icon nc-spaceship", // you can choose any icon you like
-    component: NoticeLetterGenerator,
+    path: "/other-case",
+    name: "Other Case",
+    icon: "nc-icon nc-badge",
+    component: OtherCase,
     layout: "/admin"
   },
   {
-    path: "/notice/:caseId",
-    name:"Notice",
-    icon:"nc-icon nc-alien-33",
-    component:GenerateNoticeWithDates,
-    layout:"/admin"
-  }
+    path: "/valuation-report",
+    name: "Other Case Valuation",
+    icon: "nc-icon nc-single-copy-04",
+    component: ValuationReport,
+    layout: "/admin"
+  },
 
-  
+
+  {
+    path: "/notice-generator/:caseId",
+    name: "Order-Sheet",
+    icon: "nc-icon nc-spaceship",
+    component: NoticeLetterGenerator,
+    layout: "/admin"
+  },
+
+  {
+    path: "/notice/:caseId",
+    name: "Notice",
+    icon: "nc-icon nc-alien-33",
+    component: GenerateNoticeWithDates,
+    layout: "/admin"
+  },
+
+
+
 ];
 
 export default dashboardRoutes;

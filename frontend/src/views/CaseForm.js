@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import "../styles/HindiFont.css";
 
 export default function CaseForm() {
+  
   const [formData, setFormData] = useState({
     SROName: "",
     District: "",
@@ -119,8 +120,8 @@ export default function CaseForm() {
       <div className="card shadow-lg border-0">
 
         {/* -------------------- HEADER -------------------- */}
-        <div className="card-header bg-warning">
-          <h4 className="card-title fw-bold text-dark">📁 Case Entry</h4>
+        <div className="card-header bg-info">
+          <h4 className="card-title fw-bold text-dark"> Case Entry</h4>
         </div>
 
         <div className="card-body">

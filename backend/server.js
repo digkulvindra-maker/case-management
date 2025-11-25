@@ -12,8 +12,19 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/generated_valuation_reports", express.static(path.join(__dirname, "generated_valuation_reports")));
 app.use("/generated_ordersheet", express.static(path.join(__dirname, "generated_ordersheet")));
 app.use("/generated_notices", express.static(path.join(__dirname, "generated_notices")));
+
+
+// app.use("/generated_valuation_reports", express.static(path.join(__dirname, "generated_valuation_reports")));
+
+
+
+//   console.log("🔥 TEST API HIT!");
+//   console.log("Request body:", req.body);
+//   res.json({ message: "Test API working!" });
+// });
 
 
 // ------------------ Create new case ------------------
@@ -71,6 +82,7 @@ app.get("/api/cases", async (req, res) => {
     res.status(500).json({ message: "Error fetching cases" });
   }
 });
+
 
 // ------------------ Get case by ID ------------------
 app.get("/api/case/:id", async (req, res) => {
@@ -211,66 +223,124 @@ app.get("/api/districts", async (req, res) => {
   }
 });
 
-
-// ------------------ Generate Order Sheet from Template ------------------
+// ------------------ Generate Notice (Order Sheet) ------------------
 app.post("/api/generate-notice", async (req, res) => {
   const { caseId, format } = req.body;
   if (!caseId) return res.status(400).json({ error: "Missing caseId" });
 
   try {
+    // 🔹 Load Case + Valuation Data
     const [caseRows] = await db.query("SELECT * FROM Cases WHERE id = ?", [caseId]);
     const [valRows] = await db.query("SELECT * FROM case_valuation WHERE CaseId = ?", [caseId]);
+
     const caseData = caseRows[0];
     const valData = valRows[0] || {};
+
     if (!caseData) return res.status(404).json({ error: "Case not found" });
 
+    // 🔹 Load Other Case Entry (only if case type is OTHER)
+    let otherEntry = {};
+    if (caseData.CaseType === "vU;") {
+      const [otherRows] = await db.query(
+        `SELECT o.*, d.court_name 
+         FROM other_case_entries o
+         LEFT JOIN district_courts d ON o.district_court_id = d.id
+         WHERE o.case_id = ?
+         LIMIT 1`,
+        [caseId]
+      );
+
+      otherEntry = otherRows[0] || {};
+    }
+
+
+    // --- Helper for date formatting ---
+    const formatDate = (date) => {
+      if (!date) return "";
+      try {
+        return new Date(date)
+          .toLocaleDateString("en-GB")
+          .replace(/\//g, "/");
+      } catch {
+        return "";
+      }
+    };
+
+    // 🔸 Prepare data for template
     const data = {
+      // ------------------ Case Data ------------------
       CaseNo: caseData.CaseNo,
-      SROName: caseData.SROName,
       CaseYear: caseData.CaseYear,
       CaseType: caseData.CaseType || "",
+
+      SROName: caseData.SROName,
+
+      Collector: caseData.Collector,
+      District: caseData.District,
       FirstParty: caseData.FirstParty || "",
       SecondParty: caseData.SecondParty || "",
-      CaseRegistredDate: caseData.CaseRegistredDate
-        ? new Date(caseData.CaseRegistredDate).toLocaleDateString("en-GB").replace(/\//g, "/")
-        : "",
-      DocumentNumber: caseData.DocumentNumber,
-      DocumentDate: caseData.DocumentDate
-        ? new Date(caseData.DocumentDate).toLocaleDateString("en-GB").replace(/\//g, "/")
-        : "",
-      District: caseData.District,
-      Collector: caseData.Collector,
+      CaseRegistredDate: formatDate(caseData.CaseRegistredDate) || "",
+      DocumentNumber: caseData.DocumentNumber || "",
+      DocumentDate: formatDate(caseData.DocumentDate),
+
+      // ------------------ Valuation Data ------------------
       PreAmt: valData.PreAmt || 0,
       AfterAmt: valData.AfterAmt || 0,
       PreTotal: valData.PreTotal || 0,
       AfterTotal: valData.AfterTotal || 0,
       BalanceTotal: (valData.AfterTotal || 0) - (valData.PreTotal || 0),
+
       CurrentDate: new Date().toLocaleDateString("hi-IN"),
+
+      // ------------------ Other Case Entry Data ------------------
+      OtherId: otherEntry.id || "",
+      OtherCaseId: otherEntry.case_id || "",
+      OtherDistrictCourtId: otherEntry.district_court_id || "",
+
+      OtherVaad: otherEntry.vaad || "",
+      OtherLetterNo: otherEntry.letter_no || "",
+      OtherLetterDate: formatDate(otherEntry.letter_date),
+      OtherCourtName: otherEntry.court_name || "",
+      OtherCivilCaseNo: otherEntry.civil_case_no || "",
+      OtherCivilCaseYear: otherEntry.civil_case_year || "",
     };
 
-    const templatePath = path.join(__dirname, "templates", "OrderSheet.docx");
+    // ✅ TEMPLATE SELECTION LOGIC
+    let templateFile = "OrderSheet.docx"; // default template
+    if (caseData.CaseType === "vU;") {
+      templateFile = "OrderSheet_other.docx";  // other case template
+    }
+
+    // Load the correct template
+    const templatePath = path.join(__dirname, "templates", templateFile);
     const content = fs.readFileSync(templatePath, "binary");
 
     const zip = new PizZip(content);
-    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true,delimiters: { start: '^^', end: '^^' }}); // safer custom delimiters});
-   
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      delimiters: { start: "^^", end: "^^" }
+    });
+
     doc.setData(data);
     doc.render();
 
-    
-
     const buffer = doc.getZip().generate({ type: "nodebuffer" });
+
+    // 📁 Output location
     const outputDir = path.join(__dirname, "generated_ordersheet");
     if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
 
-    const fileName = `OrderSheet_${data.CaseNo}_${data.CaseYear}.${format === "pdf" ? "pdf" : "docx"}`;
+    const fileName = `OrderSheet_${data.CaseNo}_${data.CaseYear}_${Date.now()}.${format === "pdf" ? "pdf" : "docx"}`;
     const outputFilePath = path.join(outputDir, fileName);
 
     fs.writeFileSync(outputFilePath, buffer);
+
     const publicPath = `generated_ordersheet/${fileName}`;
     res.json({ success: true, filePath: publicPath });
+
   } catch (err) {
-    console.error("Error generating notice:", err);
+    console.error("❌ Error generating notice:", err);
     res.status(500).json({ error: "Error generating notice" });
   }
 });
@@ -392,6 +462,239 @@ app.get("/api/generated-notices/:caseId", async (req, res) => {
     res.status(500).json({ message: "DB error fetching generated notices" });
   }
 });
+
+// ------------------ List cases where CaseType = 'other' ------------------
+app.get("/api/cases/other", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT id, CaseNo, CaseYear FROM Cases WHERE CaseType = 'vU;' ORDER BY id DESC"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching OTHER cases:", err);
+    res.status(500).json({ message: "DB error fetching other cases" });
+  }
+});
+
+// ------------------ District Courts List ------------------
+app.get("/api/district-courts", async (req, res) => {
+  console.log("🔥 district-courts API called"); // debug line
+
+  try {
+    const [rows] = await db.query(
+      "SELECT id, court_name FROM district_courts ORDER BY court_name ASC"
+    );
+    console.log("🔥 SQL Result:", rows); // debug
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ SQL ERROR:", err);
+    res.status(500).json({ message: "Error fetching district courts", error: err });
+  }
+});
+
+
+app.post("/api/other-case-entry", async (req, res) => {
+  console.log("📥 Received POST /api/other-case-entry:", req.body);
+
+  try {
+    const {
+      case_id,
+      district_court_id,
+      vaad,
+      letter_no,
+      letter_date,
+      civil_case_no,
+      civil_case_year
+    } = req.body;
+
+    if (!case_id || !district_court_id) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // 🔍 Check if entry already exists
+    const checkSql = "SELECT id FROM other_case_entries WHERE case_id = ? LIMIT 1";
+    const [rows] = await db.query(checkSql, [case_id]);
+
+    if (rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "This case has already been registered in Other Case Entries."
+      });
+    }
+
+    // 🔍 Fetch court_name from district_courts table
+    const [courtRows] = await db.query(
+      "SELECT court_name FROM district_courts WHERE id = ? LIMIT 1",
+      [district_court_id]
+    );
+
+    const court_name = courtRows.length > 0 ? courtRows[0].court_name : null;
+
+    // 📝 Insert new entry
+    const insertSql = `
+            INSERT INTO other_case_entries
+                (case_id, district_court_id, vaad, letter_no, letter_date, 
+                 civil_case_no, civil_case_year, court_name)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+    await db.query(insertSql, [
+      case_id,
+      district_court_id,
+      vaad || null,
+      letter_no || null,
+      letter_date || null,
+      civil_case_no || null,
+      civil_case_year || null,
+      court_name || null
+    ]);
+
+    console.log("✅ Data saved to other_case_entries");
+
+    res.json({
+      success: true,
+      message: "Other Case Entry saved successfully!"
+    });
+
+  } catch (err) {
+    console.error("❌ Error saving other case entry:", err);
+
+    if (err.code === "ER_DUP_ENTRY") {
+      return res.status(400).json({
+        success: false,
+        message: "This case is already registered in Other Case Entries."
+      });
+    }
+
+    res.status(500).json({
+      message: "Error saving other case entry",
+      error: err.message,
+    });
+  }
+});
+
+// ------------------------------------------------------------
+// 💠 Generate Valuation Report Letter
+// ------------------------------------------------------------
+app.post("/api/generate-valuation-report", async (req, res) => {
+  try {
+    const { caseId } = req.body;
+    if (!caseId) {
+      return res.status(400).json({ error: "Missing caseId" });
+    }
+
+    // -------------------------------------------------
+    // 1️⃣ FETCH CASE DATA
+    // -------------------------------------------------
+    const [caseRows] = await db.query(
+      `SELECT SROName, CaseNo, CaseYear, DocumentDate 
+       FROM cases WHERE id = ?`,
+      [caseId]
+    );
+
+    if (caseRows.length === 0) {
+      return res.status(404).json({ error: "Case data not found" });
+    }
+
+    const caseData = caseRows[0];
+
+    // 2️⃣ FETCH other_case_entries DATA
+    const [otherRows] = await db.query(
+      "SELECT * FROM other_case_entries WHERE case_id = ? LIMIT 1",
+      [caseId]
+    );
+
+    if (!otherRows || otherRows.length === 0) {
+      return res.status(400).json({
+        error: "No matching entry found in other_case_entries for this case. Make sure this is a vU; case."
+      });
+    }
+
+    const otherData = otherRows[0];
+
+
+
+
+    // -------------------------------------------------
+    // 3️⃣ SELECT TEMPLATE BASED ON DOCUMENT DATE
+    // -------------------------------------------------
+    const cutoffDate = new Date("2004-04-01");
+    const documentDateObj = caseData.DocumentDate ? new Date(caseData.DocumentDate) : new Date();
+
+    const templateName =
+      documentDateObj < cutoffDate
+        ? "ValuationReportOld.docx"
+        : "ValuationReportNew.docx";
+
+    const templatePath = path.join(__dirname, "templates", templateName);
+
+    const templateContent = fs.readFileSync(templatePath, "binary");
+    const zip = new PizZip(templateContent);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      delimiters: { start: "^^", end: "^^" },
+    });
+
+    // -------------------------------------------------
+    // 4️⃣ MERGE FINAL DATA (Same Format as Your First Block)
+    // -------------------------------------------------
+    const data = {
+      SROName: caseData.SROName || "",
+      CaseNo: caseData.CaseNo || "",
+      CaseYear: caseData.CaseYear || "",
+
+      DocumentDate: caseData.DocumentDate
+        ? new Date(caseData.DocumentDate).toLocaleDateString("en-GB")
+        : "",
+
+      vaad: otherData.vaad || "",
+      letter_no: otherData.letter_no || "",
+
+      letter_date: otherData.letter_date
+        ? new Date(otherData.letter_date).toLocaleDateString("en-GB")
+        : "",
+
+      civil_case_no: otherData.civil_case_no || "",
+      civil_case_year: otherData.civil_case_year || "",
+      court_name: otherData.court_name || "",
+
+      GeneratedAt: new Date().toLocaleDateString("hi-IN")
+    };
+
+
+    doc.setData(data);
+    doc.render();
+
+    const buffer = doc.getZip().generate({ type: "nodebuffer" });
+
+    // -------------------------------------------------
+    // 5️⃣ SAVE FILE
+    // -------------------------------------------------
+    const outputDir = path.join(__dirname, "generated_valuation_reports");
+    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
+
+    const fileName = `ValuationReport_${caseData.CaseNo}_${caseData.CaseYear}_${Date.now()}.docx`;
+    const outputFilePath = path.join(outputDir, fileName);
+
+    fs.writeFileSync(outputFilePath, buffer);
+
+    const publicPath = `generated_valuation_reports/${fileName}`;
+
+    // -------------------------------------------------
+    // 6️⃣ RETURN RESPONSE
+    // -------------------------------------------------
+    res.json({
+      success: true,
+      filePath: publicPath
+    });
+
+  } catch (error) {
+    console.log("❌ ERROR:", error);
+    return res.status(500).json({ error: "Server error", details: error.message });
+  }
+});
+
 
 
 // ------------------ Start server ------------------
